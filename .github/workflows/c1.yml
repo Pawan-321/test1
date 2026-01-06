@@ -14,19 +14,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Install dependencies
       - name: Install dependencies
         run: npm ci
 
-     
-
-      # 4. Build project
       - name: Build project
         run: npm run build
 
-      # 5. Package dist folder
+      - name: List files for debug
+        run: ls -la
+
       - name: Package dist folder
         run: tar -czf dist.tar.gz dist
+
 
       # 6. Upload artifact for deployment
       - name: Upload build artifact
