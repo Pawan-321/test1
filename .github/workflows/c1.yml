@@ -1,0 +1,68 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Install dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # 3. Run tests
+      - name: Run tests
+        run: npm test
+
+      # 4. Build project
+      - name: Build project
+        run: npm run build
+
+      # 5. Package dist folder
+      - name: Package dist folder
+        run: tar -czf dist.tar.gz dist
+
+      # 6. Upload artifact for deployment
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist.tar.gz
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Download build artifact
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+
+      # 2. Set up SSH
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      # 3. Upload build to Azure VM
+      - name: Upload build to server
+        run: scp dist.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.SERVER_PATH }}
+
+      # 4. Extract build on Azure VM
+      - name: Extract build on server
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+            cd ${{ secrets.SERVER_PATH }} && \
+            tar -xzf dist.tar.gz && \
+            rm dist.tar.gz
+          "
