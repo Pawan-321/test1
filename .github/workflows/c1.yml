@@ -24,6 +24,8 @@ jobs:
 
       - name: Build project
         run: npm run build
+        working-directory: test1-main
+
 
       - name: Package dist folder
         run: tar -czf dist.tar.gz dist
